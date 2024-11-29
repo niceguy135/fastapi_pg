@@ -10,3 +10,14 @@ class UsersAddDTO(BaseModel):
 
 class UsersDTO(UsersAddDTO):
     id: int
+
+
+class AchievementsAddDTO(BaseModel):
+    title_ru: str
+    title_en: str
+    description_ru: str
+    description_en: str
+    value: int
+
+class AchievementsDTO(AchievementsAddDTO):
+    id: int
