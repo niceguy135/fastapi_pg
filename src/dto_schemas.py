@@ -12,6 +12,10 @@ class UsersDTO(UsersAddDTO):
     id: int
 
 
+class UsersWithAchievements(UsersDTO):
+    achievements: list["AchievementsDTO"]
+
+
 class AchievementsAddDTO(BaseModel):
     title_ru: str
     title_en: str
