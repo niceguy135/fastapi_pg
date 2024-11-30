@@ -5,8 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from src.models import UsersOrm # noqa
-from src.database import Base
+from src.models import Base
 from src.config import settings
 
 # this is the Alembic Config object, which provides
