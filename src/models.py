@@ -70,7 +70,7 @@ class UsersAchievementsOrm(Base):
         primary_key=True,
     )
     achievement_id: Mapped[int] = mapped_column(
-        ForeignKey("achievements,id", ondelete="CASCADE"),
+        ForeignKey("achievements.id", ondelete="CASCADE"),
         primary_key = True,
     )
     present_at: Mapped[present_at]
