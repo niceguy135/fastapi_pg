@@ -3,10 +3,7 @@ import datetime
 from typing import Annotated
 
 from sqlalchemy import CheckConstraint, ForeignKey, String, text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from database import Base
-
+from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 
 str_100 = Annotated[str, String(100)]
 intpk = Annotated[int, mapped_column(primary_key=True)]
@@ -16,6 +13,20 @@ present_at = Annotated[datetime.datetime, mapped_column(server_default=text("now
 class LanguageOrm(enum.Enum):
     russian = "ru"
     english = "en"
+
+
+class Base(DeclarativeBase):
+
+    repr_cols_num = 3
+    repr_cols = tuple()
+
+    def __repr__(self):
+        cols = []
+        for idx, col in enumerate(self.__table__.columns.keys()):
+            if col in self.repr_cols or idx < self.repr_cols_num:
+                cols.append(f"{col}={getattr(self, col)}")
+
+        return f"<{self.__class__.__name__} {', '.join(cols)}>"
 
 
 class UsersOrm(Base):
