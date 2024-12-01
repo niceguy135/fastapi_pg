@@ -52,4 +52,5 @@ def downgrade() -> None:
     op.drop_table('users_achievements')
     op.drop_table('users')
     op.drop_table('achievements')
+    op.execute("DROP TYPE languageorm;")
     # ### end Alembic commands ###
