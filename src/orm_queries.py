@@ -234,3 +234,230 @@ class AsyncMainQueries:
                     )
                 )
             return prepared_dtos
+
+    @staticmethod
+    async def _get_user_max_achievs_count():
+        async with async_engine.connect() as conn:
+            max_achievements_count_user_query = text(
+                f"""SELECT 
+                    u.id AS user_id, 
+                    u.username, 
+                    COUNT(ua.achievement_id) AS achievement_count
+                FROM 
+                    {UsersOrm.__tablename__} u
+                JOIN 
+                    {UsersAchievementsOrm.__tablename__} ua 
+                    ON u.id = ua.user_id
+                GROUP BY 
+                    u.id, u.username
+                ORDER BY 
+                    achievement_count DESC
+                LIMIT 1;
+                """
+            )
+            user_id, username, count = (await conn.execute(max_achievements_count_user_query)).first()
+
+            return DTO.UserMaxAchievementsCount(
+                user_id=user_id,
+                username=username,
+                achievements_count=count
+            )
+
+    @staticmethod
+    async def _get_user_max_achievs_point():
+        async with async_engine.connect() as conn:
+            user_with_max_points_query = text(
+                f"""
+                SELECT 
+                    u.id AS user_id, 
+                    u.username, 
+                    SUM(a.value) AS total_points
+                FROM 
+                    {UsersOrm.__tablename__} u
+                JOIN 
+                    {UsersAchievementsOrm.__tablename__} ua 
+                    ON u.id = ua.user_id
+                JOIN 
+                    {AchievementOrm.__tablename__} a 
+                    ON ua.achievement_id = a.id
+                GROUP BY 
+                    u.id, u.username
+                ORDER BY 
+                    total_points DESC
+                LIMIT 1;
+                """
+            )
+            user_id, username, points = (await conn.execute(user_with_max_points_query)).first()
+
+            return DTO.UserMaxPoints(
+                user_id=user_id,
+                username=username,
+                user_points=points
+            )
+
+    @staticmethod
+    async def _get_users_max_point_diff():
+        async with async_engine.connect() as conn:
+            users_with_max_diff_by_points = text(
+                f"""
+                WITH user_points AS (
+                    SELECT 
+                        u.id AS user_id, u.username as username,
+                        SUM(a.value) AS total_points
+                    FROM 
+                        {UsersOrm.__tablename__} u
+                    JOIN 
+                        {UsersAchievementsOrm.__tablename__} ua 
+                        ON u.id = ua.user_id
+                    JOIN 
+                        {AchievementOrm.__tablename__} a 
+                        ON ua.achievement_id = a.id
+                    GROUP BY 
+                        u.id
+                )
+                SELECT 
+                    up1.user_id AS user1_id,
+                    up2.user_id AS user2_id,
+                    ABS(up1.total_points - up2.total_points) AS points_difference
+                FROM 
+                    user_points up1
+                CROSS JOIN 
+                    user_points up2
+                WHERE 
+                    up1.user_id < up2.user_id
+                ORDER BY 
+                    points_difference DESC
+                LIMIT 1;
+                """
+            )
+            user_id_first, user_id_second, points = (await conn.execute(users_with_max_diff_by_points)).first()
+
+            return DTO.UsersWithDiffPoints(
+                user_id_first=user_id_first,
+                first_username="test1",
+                user_id_second=user_id_second,
+                second_username="test2",
+                points=points
+            )
+
+    @staticmethod
+    async def _get_users_min_point_diff():
+        async with async_engine.connect() as conn:
+            users_with_min_diff_by_points = text(
+                f"""
+                WITH user_points AS (
+                    SELECT 
+                        u.id AS user_id, 
+                        SUM(a.value) AS total_points
+                    FROM 
+                        {UsersOrm.__tablename__} u
+                    JOIN 
+                        {UsersAchievementsOrm.__tablename__} ua 
+                        ON u.id = ua.user_id
+                    JOIN 
+                        {AchievementOrm.__tablename__} a 
+                        ON ua.achievement_id = a.id
+                    GROUP BY 
+                        u.id
+                )
+                SELECT 
+                    up1.user_id AS user1_id,
+                    up2.user_id AS user2_id,
+                    ABS(up1.total_points - up2.total_points) AS points_difference
+                FROM 
+                    user_points up1
+                CROSS JOIN 
+                    user_points up2
+                WHERE 
+                    up1.user_id < up2.user_id
+                ORDER BY 
+                    points_difference ASC
+                LIMIT 1;
+                """
+            )
+            user_id_first, user_id_second, points = (
+                await conn.execute(users_with_min_diff_by_points)).first()
+
+            return DTO.UsersWithDiffPoints(
+                user_id_first=user_id_first,
+                first_username="test1",
+                user_id_second=user_id_second,
+                second_username="second_username",
+                points=points
+            )
+
+    @staticmethod
+    async def _get_user_seven_days_in_row():
+        async with async_engine.connect() as conn:
+            user_get_achievs_for_seven_days_in_row = text(
+                f"""
+                                WITH user_achievement_days AS (
+                    SELECT 
+                        ua.user_id, 
+                        ua.present_at AS achievement_date
+                    FROM 
+                        {UsersAchievementsOrm.__tablename__} ua
+                    GROUP BY 
+                        ua.user_id, ua.present_at
+                ),
+                consecutive_days AS (
+                    SELECT 
+                        user_id, 
+                        achievement_date, 
+                        EXTRACT(DAY FROM now()-achievement_date) AS streak_group
+                    FROM 
+                        user_achievement_days
+                ),
+                streak_counts AS (
+                    SELECT 
+                        user_id, 
+                        COUNT(*) AS streak_length
+                    FROM 
+                        consecutive_days
+                    GROUP BY 
+                        user_id, streak_group
+                ),
+                totalcount as (
+				SELECT 
+                    u.id AS user_id, 
+                    u.username, count(u.id)
+                FROM 
+                    streak_counts sc
+                JOIN 
+                    {UsersOrm.__tablename__} u ON sc.user_id = u.id
+				group by u.id
+				)
+				select *
+				from totalcount
+				where count > 1
+                """
+            )
+
+            users = (await conn.execute(user_get_achievs_for_seven_days_in_row)).all()
+            all_users_dto = []
+            for user in users:
+                all_users_dto.append(
+                    DTO.UsersDTO(
+                        username=user.username if user is not None else "No user",
+                        language=LanguageOrm.russian,
+                        id=user.user_id if user is not None else -1,
+                    )
+                )
+
+            return all_users_dto
+
+    @classmethod
+    async def get_statistics_data(cls):
+        max_achieve_count = await cls._get_user_max_achievs_count()
+        max_achiev_point = await cls._get_user_max_achievs_point()
+        max_diff_points = await cls._get_users_max_point_diff()
+        min_diff_points = await cls._get_users_min_point_diff()
+        seven_days_in_row = await cls._get_user_seven_days_in_row()
+
+        return DTO.StatisticScheme(
+            user_max_achievements_count=max_achieve_count,
+            user_max_achievements_points=max_achiev_point,
+            users_with_max_diff=max_diff_points,
+            users_with_min_diff=min_diff_points,
+            user_seven_days_in_row=seven_days_in_row
+        )
