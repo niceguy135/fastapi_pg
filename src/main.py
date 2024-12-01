@@ -71,7 +71,8 @@ def create_fastapi_app():
     ##################################################
     @app.get("/statistics", tags=["statistics"])
     async def get_statistics():
-        pass
+        result = await AsyncMainQueries.get_statistics_data()
+        return result
     ##################################################
 
     @app.get("/", tags=["default"])
