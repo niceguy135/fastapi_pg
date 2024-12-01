@@ -11,11 +11,17 @@ present_at = Annotated[datetime.datetime, mapped_column(server_default=text("now
 
 
 class LanguageOrm(enum.Enum):
+    """
+    Перечисление языков (TYPE для БД)
+    """
     russian = "ru"
     english = "en"
 
 
 class Base(DeclarativeBase):
+    """
+    Абстрактный класс модели
+    """
 
     repr_cols_num = 3
     repr_cols = tuple()
@@ -30,6 +36,9 @@ class Base(DeclarativeBase):
 
 
 class UsersOrm(Base):
+    """
+    Модель пользователя (таблица users)
+    """
     __tablename__ = "users"
 
     id: Mapped[intpk]
@@ -43,6 +52,9 @@ class UsersOrm(Base):
 
 
 class AchievementOrm(Base):
+    """
+        Модель достижения (таблица achievements)
+    """
     __tablename__ = "achievements"
 
     id: Mapped[intpk]
@@ -63,6 +75,9 @@ class AchievementOrm(Base):
 
 
 class UsersAchievementsOrm(Base):
+    """
+        Модель записи о награждении пользователя достижением (таблица users_achievements)
+    """
     __tablename__ = "users_achievements"
 
     user_id: Mapped[int] = mapped_column(

@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import insert, select, text
 
 from src.database import async_session_factory, async_engine
-from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm, present_at
+from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
 from src import dto_schemas as DTO
 
 
@@ -334,9 +334,7 @@ class AsyncMainQueries:
 
             return DTO.UsersWithDiffPoints(
                 user_id_first=user_id_first,
-                first_username="test1",
                 user_id_second=user_id_second,
-                second_username="test2",
                 points=points
             )
 
@@ -380,9 +378,7 @@ class AsyncMainQueries:
 
             return DTO.UsersWithDiffPoints(
                 user_id_first=user_id_first,
-                first_username="test1",
                 user_id_second=user_id_second,
-                second_username="second_username",
                 points=points
             )
 

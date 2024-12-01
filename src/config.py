@@ -2,6 +2,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """
+    Класс с конфигурационными данными, необходимыми для подключения к БД
+    """
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
