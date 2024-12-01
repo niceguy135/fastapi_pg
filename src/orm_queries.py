@@ -1,4 +1,4 @@
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, text
 
 from src.database import async_session_factory, async_engine
 from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
@@ -128,3 +128,29 @@ class AsyncMainQueries:
             )
             session.add(new_achiv_user_record)
             await session.commit()
+
+    @staticmethod
+    async def take_users_achievements(user_id: int):
+        async with async_session_factory() as session:
+            query = (
+                select(AchievementOrm, text("present_at"))
+                .select_from(UsersAchievementsOrm)
+                .join(AchievementOrm, AchievementOrm.id == UsersAchievementsOrm.achievement_id)
+                .where(UsersAchievementsOrm.user_id == user_id)
+            )
+
+            user: UsersOrm = await session.scalar(select(UsersOrm).where(UsersOrm.id == user_id))
+            achievements = await session.execute(query)
+            prepared_dtos = []
+            for achiev, present_time in achievements:
+                print(achiev)
+                prepared_dtos.append(
+                    DTO.Translated_achievement(
+                        translated_title=achiev.title_ru if user.language == LanguageOrm.russian else achiev.title_en,
+                        translated_description=achiev.description_ru if user.language == LanguageOrm.russian
+                                                                                            else achiev.description_en,
+                        value=achiev.value,
+                        present_at=present_time
+                    )
+                )
+            return prepared_dtos

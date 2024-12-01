@@ -54,9 +54,10 @@ def create_fastapi_app():
         achievs = await AsyncMainQueries.get_all_achievements()
         return achievs
 
-    @app.get("/achievements/{user_id}}", tags=["user_achievements"])
-    async def get_user_achievements(user_id: int):
-        pass
+    @app.get("/achievements/{user_id}", tags=["user_achievements"])
+    async def get_user_achievements(user_id: int = Depends):
+        achievs = await AsyncMainQueries.take_users_achievements(user_id)
+        return achievs
 
     @app.post("/achievements", tags=["new_achievement"])
     async def create_new_achievement(new_achiev: AchievementsAddDTO):
