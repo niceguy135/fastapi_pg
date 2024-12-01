@@ -1,8 +1,90 @@
-from select import select
+from sqlalchemy import insert, select
 
-from src.database import async_session_factory
-from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm
+from src.database import async_session_factory, async_engine
+from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
 from src import dto_schemas as DTO
+
+
+class AsyncUtilsQueries:
+
+    @staticmethod
+    async def _insert_sample_users():
+        async with async_engine.connect() as conn:
+            await conn.execute(
+                insert(UsersOrm),
+                [
+                    {"username": "Борисов Кирилл", "language": LanguageOrm.russian},
+                    {"username": "Jon Doe", "language": LanguageOrm.english},
+                    {"username": "Ванька Встанька", "language": LanguageOrm.russian},
+                ],
+            )
+            await conn.commit()
+
+    @staticmethod
+    async def _insert_sample_achievements():
+        async with async_engine.connect() as conn:
+            await conn.execute(
+                insert(AchievementOrm),
+                [
+                    {
+                        "title_ru": "Бег 100м - победитель",
+                        "title_en": "100m running - winner",
+                        "description_ru": "Данное достижение выдается спортсмену, победившему в состязании на бег 100м",
+                        "description_en": "This achievement is awarded to the sportsman who wins the 100m running competition",
+                        "value": 50
+                    },
+                    {
+                        "title_ru": "Бег 100м - призер",
+                        "title_en": "100m running - laureate",
+                        "description_ru": "Данное достижение выдается спортсмену, попавшему в топ результатов участников в состязании на бег 100м",
+                        "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the 100m running competition",
+                        "value": 25
+                    },
+                    {
+                        "title_ru": "Прыжки с места 100м - победитель",
+                        "title_en": "Jumping from a place - winner",
+                        "description_ru": "Данное достижение выдается спортсмену, победившему в состязании прыжок в длину с места",
+                        "description_en": "This achievement is awarded to the athlete who wins the long jump competition from a place",
+                        "value": 50
+                    },
+                    {
+                        "title_ru": "Прыжки с места 100м - призер",
+                        "title_en": "Jumping from a place - laureate",
+                        "description_ru": "Данное достижение выдается спортсмену, попавшему в топ результатов участников в состязании на прыжок в длину с места",
+                        "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the long jump competition from a place",
+                        "value": 25
+                    },
+                ],
+            )
+            await conn.commit()
+
+    @staticmethod
+    async def _insert_sample_achievements_presents():
+        async with async_session_factory() as session:
+            user_eng_query = select(UsersOrm).where(UsersOrm.language == LanguageOrm.english)
+            user_ru_query = select(UsersOrm).where(UsersOrm.language == LanguageOrm.russian)
+
+            winner_achives_query = select(AchievementOrm).where(AchievementOrm.value == 50)
+
+            user_ru = await session.scalar(user_ru_query)
+            user_eng = await session.scalar(user_eng_query)
+            achievs = await session.scalars(winner_achives_query)
+
+            for user, achiev in zip([user_ru, user_eng], achievs):
+                session.add(
+                    UsersAchievementsOrm(
+                        user_id=user.id,
+                        achievement_id=achiev.id
+                    )
+                )
+
+            await session.commit()
+
+    @classmethod
+    async def insert_sample_data(cls):
+        await cls._insert_sample_users()
+        await cls._insert_sample_achievements()
+        await cls._insert_sample_achievements_presents()
 
 
 class AsyncMainQueries:
