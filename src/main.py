@@ -4,7 +4,7 @@ import sys
 
 import uvicorn
 
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import HTTPException
 
@@ -12,6 +12,9 @@ from alembic.config import Config
 from alembic import command
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from src.orm_queries import AsyncMainQueries, AsyncUtilsQueries
+from src.dto_schemas import PresentUserAnAchievement, AchievementsAddDTO
 
 
 def run_migrations(alembic_cfg):
@@ -32,26 +35,35 @@ def create_fastapi_app():
     ##################################################
     @app.get("/users/{user_id}", tags=["users"])
     async def get_user_info(user_id: int):
-        pass
+        user = await AsyncMainQueries.get_user(user_id)
+        return user
 
     @app.post("/users/{user_id}", tags=["users"])
-    async def present_user_an_achievement(body = Body()):
-        pass
+    async def present_user_an_achievement(body: PresentUserAnAchievement = Depends):
+        await AsyncMainQueries.give_achievement_to_user(
+            body.user_id,
+            body.achievement_id
+        )
+        return HTTPException(200)
     ##################################################
 
     #  Achievements endpoints
     ##################################################
     @app.get("/achievements", tags=["achievements"])
     async def get_achievements_info():
-        pass
+        achievs = await AsyncMainQueries.get_all_achievements()
+        return achievs
 
     @app.get("/achievements/{user_id}}", tags=["user_achievements"])
     async def get_user_achievements(user_id: int):
         pass
 
     @app.post("/achievements", tags=["new_achievement"])
-    async def create_new_achievement(body = Body()):
-        pass
+    async def create_new_achievement(new_achiev: AchievementsAddDTO):
+        await AsyncMainQueries.create_new_achievement(
+            new_achiev
+        )
+        return HTTPException(200)
     ##################################################
 
     #  Statistics endpoint
