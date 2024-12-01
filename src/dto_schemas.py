@@ -23,5 +23,11 @@ class AchievementsAddDTO(BaseModel):
     description_en: str
     value: int
 
+
 class AchievementsDTO(AchievementsAddDTO):
     id: int
+
+
+class PresentUserAnAchievement(BaseModel):
+    user_id: int
+    achievement_id: int
