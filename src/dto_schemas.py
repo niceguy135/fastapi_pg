@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from models import LanguageOrm
+from src.models import LanguageOrm
 
 
 class UsersAddDTO(BaseModel):
