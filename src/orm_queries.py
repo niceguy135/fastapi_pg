@@ -1,7 +1,9 @@
+import datetime
+
 from sqlalchemy import insert, select, text
 
 from src.database import async_session_factory, async_engine
-from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
+from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm, present_at
 from src import dto_schemas as DTO
 
 
@@ -54,6 +56,62 @@ class AsyncUtilsQueries:
                         "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the long jump competition from a place",
                         "value": 25
                     },
+                    {
+                        "title_ru": "Прыжки с места 200м - призер",
+                        "title_en": "Jumping from a place 200m - laureate",
+                        "description_ru": "Данное достижение выдается спортсмену, попавшему в топ результатов участников в состязании на прыжок в длину с места на дистанции 200 метров",
+                        "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the long jump competition from a place for a distance of 200 meters",
+                        "value": 30
+                    },
+                    {
+                        "title_ru": "Прыжки в высоту - призер",
+                        "title_en": "High jump - laureate",
+                        "description_ru": "Данное достижение выдается спортсмену, попавшему в топ результатов участников в состязании по прыжкам в высоту",
+                        "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the high jump competition",
+                        "value": 20
+                    },
+                    {
+                        "title_ru": "Прыжки в длину - чемпион",
+                        "title_en": "Long jump - champion",
+                        "description_ru": "Данное достижение выдается спортсмену, занявшему первое место в соревнованиях по прыжкам в длину",
+                        "description_en": "This achievement is awarded to the athlete who took first place in the long jump competition",
+                        "value": 50
+                    },
+                    {
+                        "title_ru": "Многоборье - финалист",
+                        "title_en": "Decathlon - finalist",
+                        "description_ru": "Данное достижение выдается спортсмену, вошедшему в финал соревнований по многоборью",
+                        "description_en": "This achievement is given to the athlete who reached the final of the decathlon competition",
+                        "value": 40
+                    },
+                    {
+                        "title_ru": "Тройной прыжок - победитель",
+                        "title_en": "Triple jump - winner",
+                        "description_ru": "Данное достижение выдается спортсмену, занявшему первое место в соревнованиях по тройному прыжку",
+                        "description_en": "This achievement is given to the athlete who took first place in the triple jump competition",
+                        "value": 45
+                    },
+                    {
+                        "title_ru": "Прыжки с места 50м - участник",
+                        "title_en": "Jumping from a place 50m - participant",
+                        "description_ru": "Данное достижение выдается каждому спортсмену, принявшему участие в соревнованиях на прыжок в длину с места на дистанции 50 метров",
+                        "description_en": "This achievement is given to every athlete who participated in the long jump competition from a place for a distance of 50 meters",
+                        "value": 10
+                    },
+                    {
+                        "title_ru": "Прыжки в длину - призер",
+                        "title_en": "Long jump - laureate",
+                        "description_ru": "Данное достижение выдается спортсмену, попавшему в топ результатов участников в соревнованиях по прыжкам в длину",
+                        "description_en": "This achievement is given to the athlete who is in the top of the results of the participants in the long jump competition",
+                        "value": 35
+                    },
+                    {
+                        "title_ru": "Прыжки в высоту - участник",
+                        "title_en": "High jump - participant",
+                        "description_ru": "Данное достижение выдается каждому спортсмену, принявшему участие в соревнованиях по прыжкам в высоту",
+                        "description_en": "This achievement is given to every athlete who participated in the high jump competition",
+                        "value": 15
+                    }
                 ],
             )
             await conn.commit()
@@ -80,11 +138,33 @@ class AsyncUtilsQueries:
 
             await session.commit()
 
+    @staticmethod
+    async def _insert_sample_seven_days_in_row_achievs():
+        async with async_session_factory() as session:
+            user_query = select(UsersOrm).where(UsersOrm.id == 3)
+
+            winner_achives_query = select(AchievementOrm).where(AchievementOrm.value == 50)
+
+            user = await session.scalar(user_query)
+            achiev = (await session.scalars(winner_achives_query)).first()
+
+            for extra_day in range(9):
+                session.add(
+                    UsersAchievementsOrm(
+                        user_id=user.id,
+                        achievement_id=achiev.id + 2 + extra_day,
+                        present_at=datetime.datetime.now() - datetime.timedelta(days=extra_day)
+                    )
+                )
+
+            await session.commit()
+
     @classmethod
     async def insert_sample_data(cls):
         await cls._insert_sample_users()
         await cls._insert_sample_achievements()
         await cls._insert_sample_achievements_presents()
+        await cls._insert_sample_seven_days_in_row_achievs()
 
 
 class AsyncMainQueries:
