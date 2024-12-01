@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 
@@ -69,11 +70,21 @@ def create_fastapi_app():
 
 fastapi_app = create_fastapi_app()
 
+
+def main():
+    if "--prepare-db" in sys.argv:
+        alembic_ini = Config("alembic.ini")
+        run_migrations(alembic_ini)
+        asyncio.run(AsyncUtilsQueries.insert_sample_data())
+    elif "--clean-db" in sys.argv:
+        alembic_ini = Config("alembic.ini")
+        downgrade_migration(alembic_ini)
+    else:
+        uvicorn.run(
+            app="src.main:fastapi_app",
+            reload=True,
+        )
+
+
 if __name__ == "__main__":
-    alembic_ini = Config("alembic.ini")
-    run_migrations(alembic_ini)
-    uvicorn.run(
-        app="src.main:fastapi_app",
-        reload=True,
-    )
-    downgrade_migration(alembic_ini)
+    main()
