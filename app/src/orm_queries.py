@@ -2,9 +2,9 @@ import datetime
 
 from sqlalchemy import insert, select, text
 
-from src.database import async_session_factory, async_engine
-from src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
-from src import dto_schemas as DTO
+from app.src.database import async_session_factory, async_engine
+from app.src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
+from app.src import dto_schemas as DTO
 
 
 class AsyncUtilsQueries:

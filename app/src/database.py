@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from src.config import settings
+from app.src.config import settings
 
 
 # Создание асинхронного движка SQLAlchemy и создание фабрики сессий из него

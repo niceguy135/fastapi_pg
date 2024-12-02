@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from src.models import LanguageOrm
+from app.src.models import LanguageOrm
 
 
 class UsersAddDTO(BaseModel):

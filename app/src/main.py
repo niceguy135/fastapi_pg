@@ -13,8 +13,8 @@ from alembic import command
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
-from src.orm_queries import AsyncMainQueries, AsyncUtilsQueries
-from src.dto_schemas import PresentUserAnAchievement, AchievementsAddDTO
+from app.src.orm_queries import AsyncMainQueries, AsyncUtilsQueries
+from app.src.dto_schemas import PresentUserAnAchievement, AchievementsAddDTO
 
 
 def run_migrations(alembic_cfg):
