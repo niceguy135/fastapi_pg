@@ -4,7 +4,7 @@ import logging
 class ProjectLogging:
 
     logger = logging.getLogger("fastapi")
-    logger.setLevel(logging.getLevelName(logging.INFO))
+    logger.setLevel(logging.getLevelName(logging.DEBUG))
     log_handler = logging.StreamHandler()
     log_format = logging.Formatter("{%(asctime)s} [%(levelname)s]: %(message)s")
     log_handler.setFormatter(log_format)

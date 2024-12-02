@@ -15,8 +15,12 @@ from starlette.responses import RedirectResponse
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 
+from app.src.projectLogging import ProjectLogging
 from app.src.orm_queries import AsyncMainQueries, AsyncUtilsQueries
 from app.src.dto_schemas import PresentUserAnAchievement, AchievementsAddDTO
+
+
+logger = ProjectLogging.logger
 
 
 def run_migrations(alembic_cfg):
@@ -116,6 +120,7 @@ def create_fastapi_app():
         """
         return RedirectResponse("docs/")
 
+    logger.info("FastAPI сервер готов к работе")
     return app
 
 

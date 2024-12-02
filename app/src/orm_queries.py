@@ -2,9 +2,13 @@ import datetime
 
 from sqlalchemy import insert, select, text
 
+from app.src.projectLogging import ProjectLogging
 from app.src.database import async_session_factory, async_engine
 from app.src.models import UsersOrm, AchievementOrm, UsersAchievementsOrm, LanguageOrm
 from app.src import dto_schemas as DTO
+
+
+logger = ProjectLogging.logger
 
 
 class AsyncUtilsQueries:
@@ -21,6 +25,7 @@ class AsyncUtilsQueries:
                 ],
             )
             await conn.commit()
+        logger.debug("Шаблонные пользователи были успешно внесены в БД")
 
     @staticmethod
     async def _insert_sample_achievements():
@@ -115,6 +120,7 @@ class AsyncUtilsQueries:
                 ],
             )
             await conn.commit()
+        logger.debug("Шаблонные достижения были успешно внесены в БД")
 
     @staticmethod
     async def _insert_sample_achievements_presents():
@@ -137,6 +143,7 @@ class AsyncUtilsQueries:
                 )
 
             await session.commit()
+        logger.debug("Несколько шаблонных пользователей были награждены")
 
     @staticmethod
     async def _insert_sample_seven_days_in_row_achievs():
@@ -158,6 +165,7 @@ class AsyncUtilsQueries:
                 )
 
             await session.commit()
+        logger.debug("Последний шаблонный пользователь был награжден достижениями 7 дней подряд")
 
     @classmethod
     async def insert_sample_data(cls):
@@ -173,6 +181,7 @@ class AsyncMainQueries:
     async def get_user(user_id: int):
         async with async_session_factory() as session:
             user = await session.get(UsersOrm, user_id)
+            logger.debug(f"get_user --- Был получен следующий результат: {user!r}")
             return DTO.UsersDTO.model_validate(user, from_attributes=True)
 
 
@@ -182,6 +191,7 @@ class AsyncMainQueries:
             query = select(AchievementOrm)
             result = await session.execute(query)
             achievements = result.scalars().all()
+            logger.debug(f"get_all_achievements --- Был получен следующий результат: {achievements!r}")
             return [DTO.AchievementsDTO.model_validate(row, from_attributes=True) for row in achievements]
 
 
@@ -196,6 +206,9 @@ class AsyncMainQueries:
                 value=new_achievement.value
             )
             session.add(new_achiv_model)
+
+            new_achiv_model.repr_cols_num = 6
+            logger.debug(f"create_new_achievement --- Будет внесен следующий объект: {new_achiv_model!r}")
             await session.commit()
 
 
@@ -206,8 +219,15 @@ class AsyncMainQueries:
                 user_id=user_id,
                 achievement_id=achiev_id
             )
-            session.add(new_achiv_user_record)
-            await session.commit()
+            try:
+                session.add(new_achiv_user_record)
+                await session.commit()
+                logger.debug(f"give_achievement_to_user --- Пользователю {user_id} "
+                             f"был успешно награжден достижением {achiev_id}")
+            except Exception as e:
+                await session.rollback()
+                logger.error(f"give_achievement_to_user --- Невозможно назначить достижение пользователю! Причина: {e}")
+
 
     @staticmethod
     async def take_users_achievements(user_id: int):
@@ -220,10 +240,11 @@ class AsyncMainQueries:
             )
 
             user: UsersOrm = await session.scalar(select(UsersOrm).where(UsersOrm.id == user_id))
+            logger.debug(f"take_users_achievements --- Пользователь: {user!r}")
             achievements = await session.execute(query)
             prepared_dtos = []
             for achiev, present_time in achievements:
-                print(achiev)
+                logger.debug(f"take_users_achievements --- Достижение: {achiev}; получено: {present_time}")
                 prepared_dtos.append(
                     DTO.Translated_achievement(
                         translated_title=achiev.title_ru if user.language == LanguageOrm.russian else achiev.title_en,
@@ -256,6 +277,7 @@ class AsyncMainQueries:
                 """
             )
             user_id, username, count = (await conn.execute(max_achievements_count_user_query)).first()
+            logger.debug(f"_get_user_max_achievs_count --- Получено: {(user_id, username, count)}")
 
             return DTO.UserMaxAchievementsCount(
                 user_id=user_id,
@@ -288,6 +310,7 @@ class AsyncMainQueries:
                 """
             )
             user_id, username, points = (await conn.execute(user_with_max_points_query)).first()
+            logger.debug(f"_get_user_max_achievs_point --- Получено: {(user_id, username, points)}")
 
             return DTO.UserMaxPoints(
                 user_id=user_id,
@@ -331,6 +354,7 @@ class AsyncMainQueries:
                 """
             )
             user_id_first, user_id_second, points = (await conn.execute(users_with_max_diff_by_points)).first()
+            logger.debug(f"_get_user_max_achievs_point --- Получено: {(user_id_first, user_id_second, points)}")
 
             return DTO.UsersWithDiffPoints(
                 user_id_first=user_id_first,
@@ -375,6 +399,7 @@ class AsyncMainQueries:
             )
             user_id_first, user_id_second, points = (
                 await conn.execute(users_with_min_diff_by_points)).first()
+            logger.debug(f"_get_user_min_achievs_point --- Получено: {(user_id_first, user_id_second, points)}")
 
             return DTO.UsersWithDiffPoints(
                 user_id_first=user_id_first,
@@ -432,6 +457,7 @@ class AsyncMainQueries:
             users = (await conn.execute(user_get_achievs_for_seven_days_in_row)).all()
             all_users_dto = []
             for user in users:
+                logger.debug(f"_get_user_seven_days_in_row --- Получено: {user!r}")
                 all_users_dto.append(
                     DTO.UsersDTO(
                         username=user.username if user is not None else "No user",

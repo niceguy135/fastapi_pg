@@ -9,6 +9,8 @@ services:
       context: ./app
     container_name: fastapi_app
     restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
     networks:
       - dev
     ports:
