@@ -130,8 +130,9 @@ def main():
         downgrade_migration(alembic_ini)
     else:
         uvicorn.run(
-            app="src.main:fastapi_app",
-            reload=True,
+            host="127.0.0.1",
+            port=8000,
+            app="src.main:fastapi_app"
         )
 
 
