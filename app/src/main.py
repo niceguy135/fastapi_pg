@@ -12,6 +12,7 @@ from alembic.config import Config
 from alembic import command
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 
 from app.src.orm_queries import AsyncMainQueries, AsyncUtilsQueries
 from app.src.dto_schemas import PresentUserAnAchievement, AchievementsAddDTO
