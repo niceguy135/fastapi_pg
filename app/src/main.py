@@ -10,6 +10,7 @@ from fastapi.exceptions import HTTPException
 
 from alembic.config import Config
 from alembic import command
+from starlette.responses import RedirectResponse
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
@@ -113,7 +114,7 @@ def create_fastapi_app():
         """
         Дефолтный эндпоинт для случаев неверного введения адреса
         """
-        return HTTPException(404)
+        return RedirectResponse("docs/")
 
     return app
 
